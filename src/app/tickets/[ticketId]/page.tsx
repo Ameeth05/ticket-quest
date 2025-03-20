@@ -10,12 +10,12 @@ export default async function Page({
   const ticket = initialTickets.find((ticket) => ticket.id === ticketId);
 
   if (!ticket) {
-    return <p>{`Ticket ${ticketId} not found`}</p>
+    return <p>{`Ticket ${ticketId} not found`}</p>;
   }
   return (
     <div>
-      <h2 className = "text-lg">{ticket.title}</h2>
-      <p className = "text-sm">{ticket.content}</p>
+      <h2 className="text-lg">{ticket.title}</h2>
+      <p className="text-sm">{ticket.content}</p>
     </div>
-  )
+  );
 }
