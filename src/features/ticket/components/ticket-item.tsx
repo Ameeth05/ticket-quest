@@ -23,12 +23,12 @@ export default function TicketItem({ ticket, isDetail }: TicketItemProps) {
   console.log(ticketPath(ticket.id));
   return (
     <div
-      className={cn("w-full flex gap-x-2 ", {
+      className={cn("w-full flex gap-x-6", {
         "max-w-[420px]": !isDetail,
         "max-w-[580px]": isDetail,
       })}
     >
-      <Card className="w-full">
+      <Card className="flex-1">
         <CardHeader>
           <CardTitle className="flex gap-x-2">
             <span>{TICKET_ICONS[ticket.status]}</span>
