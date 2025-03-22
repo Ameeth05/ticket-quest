@@ -1,4 +1,9 @@
+import Link from "next/link";
+import Placeholder from "@/components/placeholder";
+import { Button } from "@/components/ui/button";
 import { initialTickets } from "@/data";
+import TicketItem from "@/features/components/ticket-item";
+import { ticketsPath } from "@/paths";
 
 export default async function Page({
   params,
@@ -10,12 +15,20 @@ export default async function Page({
   const ticket = initialTickets.find((ticket) => ticket.id === ticketId);
 
   if (!ticket) {
-    return <p>{`Ticket ${ticketId} not found`}</p>;
+    return (
+      <Placeholder
+        label="Ticket not found"
+        button={
+          <Button asChild variant="outline">
+            <Link href={ticketsPath()}>Go To Tickets</Link>
+          </Button>
+        }
+      />
+    );
   }
   return (
-    <div>
-      <h2 className="text-lg">{ticket.title}</h2>
-      <p className="text-sm">{ticket.content}</p>
+    <div className="flex justify-center w-full animate-fade-in-from-top">
+      <TicketItem ticket={ticket} isDetail={true} />
     </div>
   );
 }
