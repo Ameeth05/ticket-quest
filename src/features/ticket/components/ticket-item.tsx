@@ -20,7 +20,6 @@ export default function TicketItem({ ticket, isDetail }: TicketItemProps) {
       </Link>
     </Button>
   );
-  console.log(ticketPath(ticket.id));
   return (
     <div
       className={cn("w-full flex gap-x-6", {
