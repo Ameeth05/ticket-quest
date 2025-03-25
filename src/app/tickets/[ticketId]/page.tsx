@@ -1,9 +1,6 @@
-import Link from "next/link";
-import Placeholder from "@/components/placeholder";
-import { Button } from "@/components/ui/button";
-import { initialTickets } from "@/data";
+import { notFound } from "next/navigation";
 import TicketItem from "@/features/ticket/components/ticket-item";
-import { ticketsPath } from "@/paths";
+import { getTicket } from "@/features/ticket/queries/get-ticket";
 
 export default async function Page({
   params,
@@ -12,19 +9,10 @@ export default async function Page({
 }) {
   const { ticketId } = await params;
 
-  const ticket = initialTickets.find((ticket) => ticket.id === ticketId);
+  const ticket = await getTicket(ticketId);
 
   if (!ticket) {
-    return (
-      <Placeholder
-        label="Ticket not found"
-        button={
-          <Button asChild variant="outline">
-            <Link href={ticketsPath()}>Go To Tickets</Link>
-          </Button>
-        }
-      />
-    );
+    notFound();
   }
   return (
     <div className="flex justify-center w-full animate-fade-in-from-top">
