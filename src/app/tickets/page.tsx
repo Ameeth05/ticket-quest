@@ -7,6 +7,14 @@ import Spinner from "@/components/spinner";
 import TicketList from "@/features/ticket/components/ticket-list";
 // import { Ticket } from "@/features/ticket/types";
 
+// the following expression forces the page to be dynamic. For some reason next.js consideres this page to be static meaning it is built during build time and the content in the page wouldnt change irresepctive of data fetching happening on this page. Apparently this not the best practice
+// export const dynamic = "force-dynamic";
+
+// Revalidate this page every 30 seconds to ensure fresh data is served.
+// This ensures that the page content is updated periodically without requiring a full rebuild. The page however is still considered a static page.
+// This is called Time-based cache part of Incremental Static Regenaration (ISR)
+//export const revalidate = 30;
+
 export default async function Page() {
   // The following code is commented as it mimics client side data fetching making this a client component. However, all this code can be commented by making this component a server components and directly fetching data from the server making it easier for the developers to fetch data with lesser code and state management
   // const [tickets, setTickets] = useState<Ticket[]>([]);

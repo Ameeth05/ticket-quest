@@ -1,11 +1,12 @@
-import { SquareArrowOutUpRight } from "lucide-react";
+import { Ticket } from "@prisma/client";
+import { LucideTrash, SquareArrowOutUpRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ticketPath } from "@/paths";
+import { deleteTicket } from "../actions/delete-ticket";
 import { TICKET_ICONS } from "../constants";
-import { Ticket } from "../types";
 
 type TicketItemProps = {
   ticket: Ticket;
@@ -15,11 +16,28 @@ type TicketItemProps = {
 export default function TicketItem({ ticket, isDetail }: TicketItemProps) {
   const detailButton = (
     <Button asChild size="icon" variant="outline">
-      <Link href={ticketPath(ticket.id)}>
+      <Link prefetch href={ticketPath(ticket.id)}>
         <SquareArrowOutUpRight className="h-4 w-4" />
       </Link>
     </Button>
   );
+
+  const deleteButton = (
+    // One way of using action
+    // <form
+    //   action={async () => {
+    //     "use server";
+    //     deleteTicket(ticket.id);
+    //   }}
+    // >
+
+    <form action={deleteTicket.bind(null, ticket.id)}>
+      <Button variant="outline" size="icon">
+        <LucideTrash className="h-4 w-4" />
+      </Button>
+    </form>
+  );
+
   return (
     <div
       className={cn("w-full flex gap-x-6", {
@@ -44,10 +62,9 @@ export default function TicketItem({ ticket, isDetail }: TicketItemProps) {
           </span>
         </CardContent>
       </Card>
-
-      {isDetail ? null : (
-        <div className="flex flex-col gap-y-1">{detailButton}</div>
-      )}
+      <div className="flex flex-col gap-y-1">
+        {isDetail ? deleteButton : detailButton}
+      </div>
     </div>
   );
 }
