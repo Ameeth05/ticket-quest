@@ -1,8 +1,10 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+// import Script from "next/script";
 import Header from "@/components/header";
 import ThemeProvider from "@/components/theme/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,6 +28,13 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html suppressHydrationWarning lang="en">
+      {/* <head>
+        <Script
+          src="//unpkg.com/react-scan/dist/auto.global.js"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+        />
+      </head> */}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -34,6 +43,7 @@ export default function RootLayout({
           <main className="py-24 px-8 min-h-screen flex-1 overflow-y-auto overf low-x-hidden bg-secondary/20 flex flex-col">
             {children}
           </main>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

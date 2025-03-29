@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ActionState } from "../utils/to-action-state";
 
 type UseActionFeedbackOptions = {
@@ -10,7 +10,10 @@ export const useActionFeedback = (
   actionState: ActionState,
   options: UseActionFeedbackOptions
 ) => {
+  const prevTimestamp = useRef(actionState.timestamp);
+  const isUpdate = prevTimestamp.current !== actionState.timestamp;
   useEffect(() => {
+    if (!isUpdate) return;
     if (actionState.status === "SUCCESS") {
       //   console.log(actionState.message);
       options.onSuccess?.({ actionState });
@@ -20,5 +23,6 @@ export const useActionFeedback = (
       //   console.log(actionState.message);
       options.onError?.({ actionState });
     }
-  }, [actionState, options]);
+    prevTimestamp.current = actionState.timestamp;
+  }, [isUpdate, actionState, options]);
 };
