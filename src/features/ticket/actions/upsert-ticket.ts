@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { setCookieByKey } from "@/actions/cookies";
 import {
   ActionState,
   formErrorToActionState,
@@ -36,10 +37,6 @@ export const upsertTicket = async (
       create: data,
     });
   } catch (error) {
-    // For some reason following is not working but is working when returning from the server action when ticket is succesfully created (See below)
-    // actionState.message = "Something went wrong";
-    // return actionState;
-    // return { message: "Something went wrong", payload: formData };
     return formErrorToActionState(error, formData);
   }
 
@@ -56,6 +53,7 @@ export const upsertTicket = async (
   revalidatePath(ticketsPath());
 
   if (id) {
+    await setCookieByKey("toast", "Ticket updated");
     redirect(ticketPath(id));
   }
 

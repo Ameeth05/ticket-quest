@@ -5,6 +5,7 @@ import localFont from "next/font/local";
 import Header from "@/components/header";
 import ThemeProvider from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import RedirectToast from "@/components/redirect-toast";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -43,7 +44,8 @@ export default function RootLayout({
           <main className="py-24 px-8 min-h-screen flex-1 overflow-y-auto overf low-x-hidden bg-secondary/20 flex flex-col">
             {children}
           </main>
-          <Toaster />
+          <Toaster expand />
+          <RedirectToast />
         </ThemeProvider>
       </body>
     </html>

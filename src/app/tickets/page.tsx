@@ -7,6 +7,7 @@ import Heading from "@/components/heading";
 import Spinner from "@/components/spinner";
 import TicketList from "@/features/ticket/components/ticket-list";
 import TicketUpsertForm from "@/features/ticket/components/ticket-upsert-form";
+import RedirectToast from "@/components/redirect-toast";
 // import { Ticket } from "@/features/ticket/types";
 
 // the following expression forces the page to be dynamic. For some reason next.js consideres this page to be static meaning it is built during build time and the content in the page wouldnt change irresepctive of data fetching happening on this page. Apparently this not the best practice
@@ -32,21 +33,24 @@ export default async function Page() {
   // }, []);
 
   return (
-    <div className="flex-1 flex flex-col gap-y-8">
-      <Heading title="Tickets" description="All your tickets at one place" />
+    <>
+      <div className="flex-1 flex flex-col gap-y-8">
+        <Heading title="Tickets" description="All your tickets at one place" />
 
-      <CardCompact
-        title="Create Ticket"
-        description="A new ticket will be created"
-        content={<TicketUpsertForm />}
-        className="w-full max-w-[420px] self-center"
-      />
+        <CardCompact
+          title="Create Ticket"
+          description="A new ticket will be created"
+          content={<TicketUpsertForm />}
+          className="w-full max-w-[420px] self-center"
+        />
 
-      {/* <ErrorBoundary fallback={<Placeholder label="Something went Wrong!" />}> */}
-      <Suspense fallback={<Spinner />}>
-        <TicketList></TicketList>
-      </Suspense>
-      {/* </ErrorBoundary> */}
-    </div>
+        {/* <ErrorBoundary fallback={<Placeholder label="Something went Wrong!" />}> */}
+        <Suspense fallback={<Spinner />}>
+          <TicketList></TicketList>
+        </Suspense>
+        {/* </ErrorBoundary> */}
+      </div>
+      {/* <RedirectToast /> */}
+    </>
   );
 }
