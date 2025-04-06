@@ -30,12 +30,12 @@ export default function TicketUpsertForm({ ticket }: TicketUpsertProps) {
   }>(null);
 
   const handleSucces = () => {
-    datePickerImperativeHanlerRef.current?.reset()
+    datePickerImperativeHanlerRef.current?.reset();
   };
 
   return (
     <Form actionState={actionState} action={action} onSuccess={handleSucces}>
-      {/* The following is the first option to pass the id through the form data or we can bind to the server actions*/}
+      {/* The following is the first option to pass the id through the form data or we can bind to the server actions.*/}
       {/* <Input name="id" type="hidden" defaultValue={ticket.id} /> */}
       <Label htmlFor="title">Title</Label>
       <Input
@@ -76,7 +76,7 @@ export default function TicketUpsertForm({ ticket }: TicketUpsertProps) {
               (actionState.payload?.get("deadline") as string) ??
               ticket?.deadline
             }
-            imperativeHandleRef = {datePickerImperativeHanlerRef}
+            imperativeHandleRef={datePickerImperativeHanlerRef}
           />
           <FieldError actionState={actionState} name="deadline" />
         </div>
