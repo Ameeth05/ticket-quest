@@ -1,7 +1,7 @@
 "use client";
 
 import { Ticket } from "@prisma/client";
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { DatePicker } from "@/components/date.picker";
 import FieldError from "@/components/form/field-error";
 import Form from "@/components/form/form";
@@ -25,8 +25,16 @@ export default function TicketUpsertForm({ ticket }: TicketUpsertProps) {
     EMPTY_ACTION_STATE
   );
 
+  const datePickerImperativeHanlerRef = useRef<{
+    reset: () => void;
+  }>(null);
+
+  const handleSucces = () => {
+    datePickerImperativeHanlerRef.current?.reset()
+  };
+
   return (
-    <Form actionState={actionState} action={action}>
+    <Form actionState={actionState} action={action} onSuccess={handleSucces}>
       {/* The following is the first option to pass the id through the form data or we can bind to the server actions*/}
       {/* <Input name="id" type="hidden" defaultValue={ticket.id} /> */}
       <Label htmlFor="title">Title</Label>
@@ -53,22 +61,22 @@ export default function TicketUpsertForm({ ticket }: TicketUpsertProps) {
       <div className="flex gap-x-2 mb-1">
         <div className="w-1/2">
           <Label htmlFor="deadline">Deadline</Label>
-          {/* <Input
-            id="deadline"
-            name="deadline"
-            type="date"
-            defaultValue={
-              (actionState.payload?.get("deadline") as string) ??
-              ticket?.deadline
-            }
-          /> */}
+          {/* 
+            Apply the key to the DatePicker component to force it to re-initialize after form submission
+            This maintains consistency with other form fields by:
+            1. Not lifting state up (avoiding mixed controlled/uncontrolled pattern)
+            2. Preserving the DatePicker's internal state management
+            3. Using React's key mechanism to reset components when needed
+          */}
           <DatePicker
+            // key={actionState.timestamp}
             id="deadline"
             name="deadline"
             defaultValue={
               (actionState.payload?.get("deadline") as string) ??
               ticket?.deadline
             }
+            imperativeHandleRef = {datePickerImperativeHanlerRef}
           />
           <FieldError actionState={actionState} name="deadline" />
         </div>
