@@ -1,5 +1,10 @@
 import { Ticket } from "@prisma/client";
-import { LucidePencil, LucideTrash, SquareArrowOutUpRight } from "lucide-react";
+import {
+  LucideMoreVertical,
+  LucidePencil,
+  LucideTrash,
+  SquareArrowOutUpRight,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +19,7 @@ import { ticketEditPath, ticketPath } from "@/paths";
 import { toCurrencyFromCent } from "@/utils/currency";
 import { deleteTicket } from "../actions/delete-ticket";
 import { TICKET_ICONS } from "../constants";
+import TicketMoreMenu from "./ticket-more-menu";
 
 type TicketItemProps = {
   ticket: Ticket;
@@ -53,9 +59,20 @@ export default function TicketItem({ ticket, isDetail }: TicketItemProps) {
     </form>
   );
 
+  const moreMenu = (
+    <TicketMoreMenu
+      ticket={ticket}
+      trigger={
+        <Button variant="outline" size="icon">
+          <LucideMoreVertical className="h-4 w-4" />
+        </Button>
+      }
+    />
+  );
+
   return (
     <div
-      className={cn("w-full flex gap-x-6", {
+      className={cn("w-full flex gap-x-1", {
         "max-w-[420px]": !isDetail,
         "max-w-[580px]": isDetail,
       })}
@@ -88,6 +105,7 @@ export default function TicketItem({ ticket, isDetail }: TicketItemProps) {
           <>
             {editButton}
             {deleteButton}
+            {moreMenu}
           </>
         ) : (
           <>
