@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 // import Script from "next/script";
 import Header from "@/components/header";
+import RedirectToast from "@/components/redirect-toast";
 import ThemeProvider from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import RedirectToast from "@/components/redirect-toast";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
