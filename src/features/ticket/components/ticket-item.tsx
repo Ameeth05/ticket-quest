@@ -2,7 +2,6 @@ import { Ticket } from "@prisma/client";
 import {
   LucideMoreVertical,
   LucidePencil,
-  LucideTrash,
   SquareArrowOutUpRight,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,7 +16,6 @@ import {
 import { cn } from "@/lib/utils";
 import { ticketEditPath, ticketPath } from "@/paths";
 import { toCurrencyFromCent } from "@/utils/currency";
-import { deleteTicket } from "../actions/delete-ticket";
 import { TICKET_ICONS } from "../constants";
 import TicketMoreMenu from "./ticket-more-menu";
 
@@ -43,21 +41,21 @@ export default function TicketItem({ ticket, isDetail }: TicketItemProps) {
     </Button>
   );
 
-  const deleteButton = (
-    // One way of using action
-    // <form
-    //   action={async () => {
-    //     "use server";
-    //     deleteTicket(ticket.id);
-    //   }}
-    // >
+  // const deleteButton = (
+  //   // One way of using action
+  //   // <form
+  //   //   action={async () => {
+  //   //     "use server";
+  //   //     deleteTicket(ticket.id);
+  //   //   }}
+  //   // >
 
-    <form action={deleteTicket.bind(null, ticket.id)}>
-      <Button variant="outline" size="icon">
-        <LucideTrash className="h-4 w-4" />
-      </Button>
-    </form>
-  );
+  //   <form action={deleteTicket.bind(null, ticket.id)}>
+  //     <Button variant="outline" size="icon">
+  //       <LucideTrash className="h-4 w-4" />
+  //     </Button>
+  //   </form>
+  // );
 
   const moreMenu = (
     <TicketMoreMenu
@@ -104,7 +102,6 @@ export default function TicketItem({ ticket, isDetail }: TicketItemProps) {
         {isDetail ? (
           <>
             {editButton}
-            {deleteButton}
             {moreMenu}
           </>
         ) : (
