@@ -1,8 +1,8 @@
 "use client";
+import clsx from "clsx";
 import { LoaderCircle } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { Button } from "../ui/button";
-import clsx from "clsx";
 
 type SubmitButtonProps = {
   label?: string;

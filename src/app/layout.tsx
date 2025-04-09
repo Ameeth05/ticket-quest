@@ -41,7 +41,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <Header />
-          <main className="py-24 px-8 min-h-screen flex-1 overflow-y-auto overf low-x-hidden bg-secondary/20 flex flex-col">
+          <main className="py-24 px-8 min-h-screen flex-1 overflow-y-auto overflow-x-hidden bg-secondary/20 flex flex-col">
             {children}
           </main>
           <Toaster expand />
