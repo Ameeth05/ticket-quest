@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 // import Script from "next/script";
+// import Script from "next/script";
 import Header from "@/components/header";
 import RedirectToast from "@/components/redirect-toast";
 import ThemeProvider from "@/components/theme/theme-provider";
@@ -24,9 +25,12 @@ export const metadata: Metadata = {
   description: "Generate Tickets",
 };
 
+// root layout doesn't automatically render when a user navigates between pages
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  
   return (
     <html suppressHydrationWarning lang="en">
       {/* <head>
