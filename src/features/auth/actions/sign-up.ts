@@ -1,7 +1,9 @@
 "use server";
 
 import { hash } from "@node-rs/argon2";
+import { Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   ActionState,
@@ -10,6 +12,7 @@ import {
 } from "@/components/form/utils/to-action-state";
 import { lucia } from "@/lib/lucia";
 import { prisma } from "@/lib/prisma";
+import { ticketsPath } from "@/paths";
 
 const signUpSchema = z
   .object({
@@ -60,8 +63,18 @@ export const signUp = async (_actionState: ActionState, formData: FormData) => {
       sessionCookie.attributes
     );
   } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return toActionState(
+        "ERROR",
+        "Either email or username is already in use",
+        formData
+      );
+    }
     return formErrorToActionState(error, formData);
   }
 
-  return toActionState("SUCCESS", "Sign up successful");
+  redirect(ticketsPath());
 };

@@ -8,6 +8,7 @@ import Heading from "@/components/heading";
 import Spinner from "@/components/spinner";
 import TicketList from "@/features/ticket/components/ticket-list";
 import TicketUpsertForm from "@/features/ticket/components/ticket-upsert-form";
+import { getAuth } from "@/features/auth/queries/get-auth";
 // import { Ticket } from "@/features/ticket/types";
 
 // the following expression forces the page to be dynamic. For some reason next.js consideres this page to be static meaning it is built during build time and the content in the page wouldnt change irresepctive of data fetching happening on this page. Apparently this not the best practice
@@ -31,6 +32,7 @@ export default async function Page() {
 
   //   fetchTickets();
   // }, []);
+
 
   return (
     <>

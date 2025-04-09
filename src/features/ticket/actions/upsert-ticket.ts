@@ -13,7 +13,6 @@ import { prisma } from "@/lib/prisma";
 import { ticketPath, ticketsPath } from "@/paths";
 import { toCent } from "@/utils/currency";
 
-
 const upsertTicketSchema = z.object({
   title: z.string().min(1).max(200),
   content: z.string().min(1).max(1024),
