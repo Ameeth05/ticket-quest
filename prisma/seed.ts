@@ -1,6 +1,18 @@
+import { hash } from "@node-rs/argon2";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+const users = [
+  {
+    username: "admin",
+    email: "admin@admin.com",
+  },
+  {
+    username: "Amith",
+    email: "amith.ch@outlook.com",
+  },
+];
 
 const tickets = [
   {
@@ -32,6 +44,15 @@ const seed = async () => {
 
   //deletes the existing data in database when the database is seeded again
   await prisma.ticket.deleteMany();
+  await prisma.user.deleteMany();
+
+  //Using the same password for
+  const passwordHash = await hash("Secreat");
+
+  const dbUsers = await prisma.user.createManyAndReturn({
+    data: users.map((user) => ({ ...user, passwordHash })),
+  });
+
   // adding data to database using for loop
   //   for (const ticket of tickets) {
   //     await prisma.ticket.create({
@@ -49,7 +70,10 @@ const seed = async () => {
 
   // Alternative way using createMAny function that adds all the data at a time
   await prisma.ticket.createMany({
-    data: tickets,
+    data: tickets.map((ticket) => ({
+      ...ticket,
+      userId: dbUsers[0].id,
+    })),
   });
 
   const t1 = performance.now();

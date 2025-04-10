@@ -35,5 +35,7 @@ export const getAuth = async () => {
     }
   } catch {}
 
+  
+
   return result;
 };
