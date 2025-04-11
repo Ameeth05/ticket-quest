@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 // import Script from "next/script";
 // import Script from "next/script";
-import Header from "@/components/header";
+import Header from "@/app/_navigation/header";
 import RedirectToast from "@/components/redirect-toast";
+import Sidebar from "@/app/_navigation/sidebar/components/sidebar";
 import ThemeProvider from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -30,7 +31,6 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  
   return (
     <html suppressHydrationWarning lang="en">
       {/* <head>
@@ -45,9 +45,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <Header />
-          <main className="py-24 px-8 min-h-screen flex-1 overflow-y-auto overflow-x-hidden bg-secondary/20 flex flex-col">
-            {children}
-          </main>
+          <div className="flex h-screen overflow-hidden border-collapse">
+            <Sidebar />
+            <main className="py-24 px-8 min-h-screen flex-1 overflow-y-auto overflow-x-hidden bg-secondary/20 flex flex-col">
+              {children}
+            </main>
+          </div>
           <Toaster expand />
           <RedirectToast />
         </ThemeProvider>

@@ -115,6 +115,129 @@ export const getAuth = async () => {
 };
 ```
 
+### Using Server Actions in Client Components
+
+```tsx
+// Client component using a server action
+"use client";
+
+import { useState, useEffect } from "react";
+import { serverAction } from "@/actions"; // Server action with "use server" directive
+
+export default function ClientComponent() {
+  // ❌ Won't work - can't directly use async function in component rendering
+  // const data = serverAction(); // Returns a Promise, can't be used synchronously
+
+  // ✅ Correct pattern - using useState + useEffect
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const result = await serverAction();
+      setData(result);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  // ✅ Also correct - using in event handlers
+  const handleClick = async () => {
+    const result = await serverAction(formData);
+    // Process result
+  };
+
+  return (
+    <div>
+      {loading ? "Loading..." : JSON.stringify(data)}
+      <button onClick={handleClick}>Submit</button>
+    </div>
+  );
+}
+```
+
+**Important Constraints:**
+
+- Server actions **cannot** be used directly in the component rendering flow
+- This limitation exists because:
+  - React component rendering is synchronous
+  - Server actions are asynchronous (they return Promises)
+- Server actions **can** be used in:
+  - `useEffect` hooks (for data fetching)
+  - Event handlers (onClick, onSubmit, etc.)
+  - Form actions (via the action prop)
+  - Other async contexts (like React Query's queryFn)
+
+These constraints apply even if your server action doesn't use dynamic APIs like `cookies()` - it's a fundamental limitation of React's component model.
+
+### Server Actions vs. Direct Data Fetching
+
+```tsx
+// Server component with direct data fetching - no server action needed
+export default async function ProductsPage() {
+  // Direct data fetching works perfectly well in server components
+  const response = await fetch("https://api.example.com/products");
+  const products = await response.json();
+
+  return (
+    <div>
+      <h1>Products</h1>
+      <ul>
+        {products.map((product) => (
+          <li key={product.id}>{product.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+**Important distinction:**
+
+- **Server components do NOT require server actions for data fetching**
+- You can use `fetch`, database clients, or any async function directly in server components
+
+So when should you use server actions?
+
+1. **Data Mutations**: Server actions are ideal for handling form submissions, updates, and other data mutations
+2. **Client Component Access to Server Code**: When you need client components to execute server-side code
+3. **Reusability**: When you need the same server operation to be accessible from multiple components
+4. **Progressive Enhancement**: Server actions work even without JavaScript enabled
+5. **Security**: For operations requiring authentication, validation, or other security measures
+
+**Rule of thumb:**
+
+- For reading data in server components: direct fetching is simpler
+- For mutating data or actions from client components: server actions are necessary
+
+### Server Actions Must Be Async
+
+Server actions in Next.js must always be declared as `async` functions, even if they don't contain any asynchronous operations internally:
+
+```tsx
+// This will cause a build error
+"use server";
+export function nonAsyncServerAction() {
+  // ❌ Error
+  return { success: true };
+}
+
+// This is required
+("use server");
+export async function correctServerAction() {
+  // ✅ Correct
+  return { success: true };
+}
+```
+
+This is a framework requirement because:
+
+1. **Server-Client Communication**: All server actions are executed on the server and return results to the client, which is inherently asynchronous
+2. **Promise-based Infrastructure**: The underlying infrastructure for server actions relies on Promises
+3. **Framework Enforcement**: Next.js enforces this requirement at build time
+
+This async requirement is one of the reasons why server actions can't be used directly in the component rendering flow of client components - they always return Promises that need to be handled in an asynchronous context.
+
 ## Utility Files Execution Context
 
 | File Type               | Execution Context                            | Example                                  |
