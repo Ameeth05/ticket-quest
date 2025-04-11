@@ -1,6 +1,6 @@
 import React from "react";
-import Heading from "@/components/heading";
 import AccountTabs from "@/app/(authenticated)/account/_navigation/account-tabs";
+import Heading from "@/components/heading";
 
 export default function page() {
   return (

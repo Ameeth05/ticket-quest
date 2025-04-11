@@ -4,8 +4,8 @@ import localFont from "next/font/local";
 // import Script from "next/script";
 // import Script from "next/script";
 import Header from "@/app/_navigation/header";
-import RedirectToast from "@/components/redirect-toast";
 import Sidebar from "@/app/_navigation/sidebar/components/sidebar";
+import RedirectToast from "@/components/redirect-toast";
 import ThemeProvider from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
