@@ -20,10 +20,10 @@ export default async function TicketList({
       <div className="w-full max-w-[420px] flex gap-x-2">
         <SearchInput placeholder="Search tickets ..." />
         <SortSelect
-          defaultValue="newest"
           options={[
-            { label: "Newest", value: "newest" },
-            { label: "Bounty", value: "bounty" },
+            { label: "Newest", sortKey: "createdAt", sortValue: "desc" },
+            { label: "Bounty", sortKey: "bounty", sortValue: "desc" },
+            { label: "Title", sortKey: "title", sortValue: "asc" },
           ]}
         />
       </div>
