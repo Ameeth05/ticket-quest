@@ -12,6 +12,8 @@
 8.  [Caching Strategies](#caching-strategies)
 9.  [Performance Implications](#performance-implications)
 10. [Quick Summary](#quick-summary)
+11. [Understanding `useSearchParams()` and Client-Side Navigation in Next.js](#understanding-usesearchparams-and-client-side-navigation-in-nextjs)
+12. [Deep Dive into Client-Side vs. Server-Side Navigation in Next.js 15](#deep-dive-into-client-side-vs-server-side-navigation-in-nextjs-15)
 
 ## Architecture Overview
 
@@ -164,7 +166,7 @@ export default function ClientComponent() {
   - Server actions are asynchronous (they return Promises)
 - Server actions **can** be used in:
   - `useEffect` hooks (for data fetching)
-  - Event handlers (onClick, onSubmit, etc.)
+  - Event handlers (onClick, etc.)
   - Form actions (via the action prop)
   - Other async contexts (like React Query's queryFn)
 
@@ -457,3 +459,290 @@ The crucial point, especially highlighted by the `Header` component example:
 - Functions using **server-only APIs** (like `cookies()`) **must** either:
   - Be part of a Server Component (not suitable for interactive UI).
   - Use the **`"use server"`** directive if called from Client Components.
+
+## Understanding `useSearchParams()` and Client-Side Navigation in Next.js
+
+In this section, we'll dive into a detailed discussion about how query parameters are handled in Next.js client components using `useSearchParams()`, why we manipulate URL parameters in specific ways, and the distinction between client-side and server-side navigation. This conversation arose while examining the `SearchInput` component in the Ticket Quest app.
+
+### The `SearchInput` Component and `useSearchParams()`
+
+We started by analyzing the `SearchInput` component located at `src/features/ticket/components/search-input.tsx`. Here's the relevant code snippet:
+
+```tsx
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import React from "react";
+import { Input } from "@/components/ui/input";
+
+type SearchInputProps = {
+  placeholder: string;
+};
+
+export default function SearchInput({ placeholder }: SearchInputProps) {
+  const searchParams = useSearchParams();
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const searchValue = event.target.value;
+    const params = new URLSearchParams(searchParams);
+
+    if (searchValue) {
+      params.set("search", searchValue);
+    } else {
+      params.delete("search");
+    }
+  };
+
+  return <Input placeholder={placeholder} onChange={handleSearch} />;
+}
+```
+
+#### What is `useSearchParams()`?
+
+`useSearchParams()` is a hook provided by Next.js (from `next/navigation`) that allows client components to access the current URL query parameters. It returns a `URLSearchParams` object, which is a built-in JavaScript interface for working with query strings. For example, if the current URL is `http://example.com/tickets?search=bug&category=urgent`, `useSearchParams()` would return an object that conceptually looks like:
+
+```
+URLSearchParams {
+  'search' => 'bug',
+  'category' => 'urgent'
+}
+```
+
+You can access specific parameters with methods like `get()`, check for existence with `has()`, or modify them by creating a new instance, as seen in the `SearchInput` component.
+
+#### Issue in the Current Implementation
+
+In the `SearchInput` component, while `useSearchParams()` is used to read the current parameters and a new `URLSearchParams` object is created to modify the 'search' parameter, there's a critical missing piece: the updated parameters are not pushed to the browser's URL. This means the URL doesn't change, and no navigation or filtering based on the new parameters occurs. The fix would involve using `useRouter()` from `next/navigation` to update the URL, which we'll discuss later.
+
+### Why Make a Copy of `searchParams`?
+
+A key question was why we create a copy of `searchParams` using `new URLSearchParams(searchParams)` instead of modifying it directly. The answer lies in the nature of the object returned by `useSearchParams()`:
+
+- **Read-Only Nature**: The `URLSearchParams` object from `useSearchParams()` is read-only in the context of Next.js client navigation. Modifying it directly doesn't update the actual URL or trigger navigation.
+- **Preparing Changes**: By creating a new instance with `new URLSearchParams(searchParams)`, you can modify parameters freely (e.g., `params.set('search', value)`). This copy acts as a staging area for the desired URL state before applying it.
+- **URL Update Requirement**: After modification, you must use `useRouter()` to push the updated parameters to the browser's URL via `router.push('/path?' + params.toString())`. This step actually changes the URL and can trigger client-side navigation.
+
+Without making a copy, any changes would be ineffective as they wouldn't reflect in the browser's state.
+
+### What if the URL Has No Parameters?
+
+Even if the current URL has no query parameters, you still need to use `useSearchParams()`. If there are no parameters, it returns an empty `URLSearchParams` object, which is still valid for creating a new copy and adding parameters. Directly using `new URLSearchParams()` without basing it on `useSearchParams()` would disconnect your changes from the current URL state, potentially losing existing parameters if they were present. Using `useSearchParams()` ensures consistency with Next.js's navigation system.
+
+### Why Not Manually Construct a Query String?
+
+Another question was whether you could manually create a query string (e.g., `'?search=' + value`) instead of using `useSearchParams()` and `URLSearchParams`. While possible, this approach has significant drawbacks:
+
+- **Loss of Existing Parameters**: Manually crafting a string risks overwriting other parameters (e.g., `category=urgent`) unless you parse the current URL yourself, which `useSearchParams()` does automatically.
+- **Error-Prone Encoding**: `URLSearchParams` handles URL encoding of special characters; manual string construction often leads to errors.
+- **Framework Integration**: Next.js encourages using its hooks for state and navigation management, ensuring compatibility with client-side routing and caching mechanisms.
+
+For example, a manual approach might look like:
+
+```javascript
+const searchValue = event.target.value;
+const newQueryString = searchValue
+  ? `?search=${encodeURIComponent(searchValue)}`
+  : "";
+const newUrl = `${window.location.pathname}${newQueryString}`;
+// Then use router.push(newUrl)
+```
+
+This ignores other parameters and requires manual encoding, whereas `URLSearchParams` simplifies and secures the process.
+
+### Client-Side vs. Server-Side Navigation
+
+We then explored the difference between client-side and server-side navigation, crucial for understanding how URL updates affect the application:
+
+- **Client-Side Navigation**:
+
+  - Happens entirely in the browser without a full server request.
+  - Uses tools like `useRouter()` or `<Link>` to update the URL and UI dynamically.
+  - Only fetches necessary data (e.g., RSC payload for server components or API responses), not full HTML.
+  - Benefits include speed, smooth transitions, and state preservation.
+  - Example: Updating search parameters in `SearchInput` should use client-side navigation to avoid page reloads.
+
+- **Server-Side Navigation**:
+  - Involves a full server request, often resulting in a complete HTML response or redirect.
+  - Occurs on initial page loads, full refreshes, or server-side redirects.
+  - Benefits include SEO support and server-enforced logic (e.g., authentication).
+  - Drawbacks are slower transitions and potential state loss.
+
+### Initial Load vs. Subsequent Navigation in Next.js App Router
+
+- **Initial Page Load (SSR/SSG)**: The server renders full HTML, including server and client components, and sends it with an RSC payload for hydration. This is traditional SSR or SSG.
+- **Subsequent Client-Side Navigation**: After hydration:
+  - **Client Components**: Fully rendered and updated in the browser; HTML is generated client-side.
+  - **Server Components**: Server executes logic and sends an RSC payload (not full HTML) with rendering instructions for affected components.
+  - This is not SSR because it doesn't involve full page HTML; it's a hybrid model of client-driven updates with server support for dynamic content.
+
+For client components like `SearchInput`, after the initial load, any UI updates (like changing input values or triggering navigation) generate HTML client-side. Server components or actions fetch minimal data from the server, ensuring efficiency.
+
+### Why Subsequent Navigation Isn't SSR
+
+Subsequent navigation isn't considered SSR because SSR implies full HTML rendering on the server for every request. In Next.js, after the initial load, navigation fetches only necessary data (RSC payloads for server components), and client components render entirely in the browser. This hybrid approach leverages server computation for dynamic content while maintaining a fast, SPA-like experience.
+
+### Conclusion
+
+Understanding `useSearchParams()` and client-side navigation is essential for building interactive features like search functionality in Next.js. The `SearchInput` component demonstrates reading URL parameters, but it needs completion with `useRouter()` to push updated parameters. Using Next.js hooks ensures integration with its navigation and caching systems, providing a seamless user experience by minimizing full server requests after the initial load. This conversation highlights the nuanced balance between client and server responsibilities in the App Router, a core strength of modern Next.js applications.
+
+## Deep Dive into Client-Side vs. Server-Side Navigation in Next.js 15
+
+Navigation in Next.js, especially with the App Router introduced in version 13 and refined in 15, operates on a hybrid model that blends server-side and client-side rendering paradigms. Understanding the distinction between client-side and server-side navigation is critical for building performant, user-friendly applications like `Ticket Quest`. This section provides a detailed exploration of both navigation types, covering their mechanisms, use cases, nuances, various scenarios, and how data fetching behaves in each context. The information is aligned with the official [Next.js 15 documentation](https://nextjs.org/docs/app/building-your-application/routing/linking-and-navigating).
+
+### Client-Side Navigation
+
+**Definition and Mechanism:**
+
+Client-side navigation refers to URL changes and UI updates that occur entirely within the browser without triggering a full page reload or a traditional server request for a complete HTML document. In Next.js, this is facilitated by the `useRouter()` hook (from `next/navigation`) or the `<Link>` component, which leverage the browser's History API to manipulate the URL and update the rendered content.
+
+- **How It Works:** When you use `router.push()` or `router.replace()` (or click a `<Link>`), Next.js performs a "soft navigation." The browser's URL bar updates, and the client-side router requests only the necessary **React Server Component (RSC) payload** from the server for the new route or updated segments. This payload contains the rendered output of Server Components and instructions for Client Components, avoiding a full HTML reload.
+- **Key Characteristics:**
+  - **Soft Navigation:** No full page reload; only changed route segments re-render (partial rendering).
+  - **State Preservation:** React state in Client Components is maintained across navigations.
+  - **Performance:** Faster transitions due to minimal data transfer and reuse of cached segments via the Router Cache.
+- **Official Documentation Insight:** As per the [Linking and Navigating guide](https://nextjs.org/docs/app/building-your-application/routing/linking-and-navigating), Next.js prefetches and caches route segments on the client, ensuring that navigation only re-renders changed segments, enhancing performance.
+
+**Methods and Usage:**
+
+- **`router.push(url)`:** Navigates to a new URL, adding the current page to the browser's history stack (user can go back).
+  - Example: `router.push('/dashboard')` takes the user to the dashboard, allowing them to return to the previous page via the back button.
+- **`router.replace(url)`:** Navigates to a new URL, replacing the current page in the history stack (user cannot go back to the replaced page).
+  - Example: In the `SearchInput` component, `replace(`${pathname}?${params.toString()}`, { scroll: false })` updates search parameters without cluttering history with each keystroke.
+- **`<Link>` Component:** Automatically handles client-side navigation with prefetching for routes visible in the viewport.
+
+**Scenarios and Use Cases:**
+
+1. **Search and Filter Updates:** Updating URL query parameters (e.g., search terms in `Ticket Quest`) without adding each state to history. Use `router.replace()` to avoid history pollution.
+2. **Page Transitions within App:** Moving between different sections (e.g., from ticket list to ticket details) where state preservation and quick transitions are desired. Use `router.push()`.
+3. **Interactive UI Elements:** Tabs or modals changing routes without full reloads, maintaining a single-page application (SPA) feel.
+
+**Data Fetching Behavior:**
+
+- **Server Components in Route:** During client-side navigation, Next.js requests an RSC payload for Server Components on the target route. Data fetching depends on configuration:
+  - **Dynamic Server Components:** If marked with `dynamic = 'force-dynamic'` or using dynamic functions like `cookies()`, the server fetches fresh data for each navigation.
+    - Example: A ticket details page with real-time status checks will fetch the latest status on each client-side navigation.
+  - **Static or Cached Server Components:** If configured with `dynamic = 'force-static'` or `fetch` options like `next: { revalidate: someTime }`, the server may return cached data unless revalidation is triggered.
+    - Example: A static FAQ page might reuse cached content during client-side navigation.
+- **Client Components:** Data fetching in Client Components (e.g., via `useEffect` or libraries like SWR) depends on their implementation. They might refetch data on navigation if coded to do so (e.g., listening to route changes).
+- **Router Cache Impact:** As noted in Next.js 15 documentation and your memory [911dfd7f-3f3b-45fd-aa3c-f67cad1967bd], the Router Cache doesn't cache pages by default, but server-side or CDN caching can still affect data freshness.
+
+**Nuances:**
+
+- **Partial Rendering:** Only changed route segments re-render. For example, navigating from `/tickets/1` to `/tickets/2` re-renders only the ticket details while preserving shared layouts.
+- **Prefetching:** `<Link>` components prefetch routes in the viewport, reducing perceived load times during navigation.
+- **Scroll Behavior:** Options like `{ scroll: false }` in `router.replace()` prevent scrolling to the top, useful for search filters where viewport position matters.
+
+### Server-Side Navigation
+
+**Definition and Mechanism:**
+
+Server-side navigation involves a full network request to the server, typically resulting in a complete HTML response or an HTTP redirect. In Next.js, this is often triggered by the `redirect()` or `permanentRedirect()` functions from `next/navigation`, used in Server Components, Server Actions, or Route Handlers.
+
+- **How It Works:** Calling `redirect(url)` throws a special error that Next.js intercepts, sending an HTTP redirect status code (307 Temporary Redirect by default, or 303 in Server Actions for POST requests) to the browser. The browser then makes a new request to the specified URL, leading to a full server response with HTML (and embedded RSC payload in App Router).
+- **Key Characteristics:**
+  - **Hard Navigation:** Full browser request, often with a page reload or new HTML document.
+  - **Server Control:** Allows server-enforced logic like authentication checks or SEO-friendly rendering.
+  - **Performance:** Slower than client-side due to full network round-trip and potential full page rendering.
+- **Official Documentation Insight:** The [redirect API reference](https://nextjs.org/docs/app/api-reference/functions/redirect) confirms that `redirect()` serves HTTP redirect responses (307/303), triggering a new browser request.
+
+**Methods and Usage:**
+
+- **`redirect(url)`:** Triggers a temporary redirect (307 or 303 status code). Used in Server Components or Actions to navigate after mutations.
+  - Example: After creating a ticket in a Server Action, `redirect('/tickets/new-ticket-id')` navigates to the new ticket page.
+- **`permanentRedirect(url)`:** Triggers a permanent redirect (308 status code), often for canonical URL changes.
+  - Example: After updating a username, `permanentRedirect('/profile/new-username')` ensures the old URL is permanently redirected.
+- **Initial Page Load or Full Refresh:** Direct browser access or manual refresh is inherently server-side, fetching full HTML.
+
+**Scenarios and Use Cases:**
+
+1. **Post-Mutation Navigation:** After form submissions or data updates in Server Actions, redirecting to a confirmation or detail page.
+2. **Authentication/Authorization:** Server-enforced redirects if a user isn't logged in (e.g., redirect to `/login`).
+3. **SEO-Critical Pages:** Initial loads or redirects ensuring search engines index the correct content with full HTML.
+4. **Canonical URL Updates:** Using `permanentRedirect()` for permanent changes like slug updates.
+
+**Data Fetching Behavior:**
+
+- **Full Server Request:** Since server-side navigation triggers a new browser request, the server has the opportunity to render everything from scratch:
+  - **SSR (Server-Side Rendering):** For pages configured with `getServerSideProps` or dynamic Server Components, the server fetches fresh data on each request and renders full HTML.
+    - Example: Redirecting to a ticket dashboard will fetch the latest ticket counts if it's SSR.
+  - **SSG (Static Site Generation):** For static pages with `getStaticProps` or ISR (Incremental Static Regeneration), the server serves pre-rendered HTML, potentially with stale data unless revalidation occurs.
+    - Example: Redirecting to a static help page might show cached content unless `revalidatePath()` was called.
+  - **Revalidation:** Using functions like `revalidatePath()` or `revalidateTag()` before redirecting ensures fresh data is fetched for the next request.
+    - Example: `revalidatePath('/tickets')` before `redirect('/tickets')` ensures updated ticket data.
+- **RSC Payload:** Even in server-side navigation, the response includes an RSC payload for hydration, but the initial response is full HTML.
+
+**Nuances:**
+
+- **HTTP Status Codes:** `redirect()` uses 307 (or 303 for POST in Server Actions), while `permanentRedirect()` uses 308, affecting browser and SEO behavior.
+- **Client Component Limitation:** `redirect()` cannot be used in Client Component event handlers (use `useRouter()` instead); it's for server-side logic.
+- **Absolute URLs:** Both functions support external redirects, not just internal routes.
+
+### Comparative Analysis and Data Fetching Scenarios
+
+To solidify understanding, let's compare how data fetching plays out in various scenarios for both navigation types in Next.js 15, considering the hybrid App Router model.
+
+**Scenario 1: Navigating to a Dynamic Ticket Details Page**
+
+- **Client-Side (`router.push('/tickets/123')`):**
+  - **Mechanism:** Soft navigation; client requests RSC payload for `/tickets/123`.
+  - **Data Fetching:** If the Server Component for ticket details is dynamic (e.g., uses `cookies()` or `dynamic = 'force-dynamic'`), the server fetches fresh data from the database during RSC payload generation. If cached, it reuses data.
+  - **Outcome:** Fast transition, latest data if dynamic, no full reload.
+- **Server-Side (`redirect('/tickets/123')` in a Server Action):**
+  - **Mechanism:** HTTP 307 redirect; browser makes a full request.
+  - **Data Fetching:** Server renders full HTML, fetching fresh data if the page is dynamic/SSR. If SSG with caching, might serve stale data unless revalidated.
+  - **Outcome:** Slower due to full request, but ensures latest data if dynamic.
+
+**Scenario 2: Updating Search Filters in `Ticket Quest`**
+
+- **Client-Side (`router.replace(`${pathname}?search=urgent`, { scroll: false })`):**
+  - **Mechanism:** Soft navigation updates URL and potentially triggers data refetch in dependent components.
+  - **Data Fetching:** If a Server Component renders the ticket list and reads `searchParams`, Next.js requests an updated RSC payload. Data is fresh if the component is dynamic; otherwise, cached data might be used.
+    - Client Components might need explicit refetch logic (e.g., `useEffect` on `searchParams` change).
+  - **Outcome:** Seamless UI update, data freshness depends on configuration.
+- **Server-Side (Not Typical for Filters):**
+  - Using `redirect()` for search filters would be overkill and inefficient, causing a full page reload, which isn't user-friendly for interactive filtering.
+
+**Scenario 3: Navigating to a Static About Page**
+
+- **Client-Side (`router.push('/about')`):**
+  - **Mechanism:** Soft navigation; RSC payload requested.
+  - **Data Fetching:** If `/about` is static (SSG or `dynamic = 'force-static'`), the server returns cached RSC payload or HTML snippet, no new data fetch.
+  - **Outcome:** Instant navigation using cached content.
+- **Server-Side (`redirect('/about')`):**
+  - **Mechanism:** Full HTTP redirect and request.
+  - **Data Fetching:** Server serves cached HTML if SSG; no database fetch unless revalidation is forced.
+  - **Outcome:** Slower due to network round-trip, same cached content as client-side.
+
+**Scenario 4: Post-Creation Redirect After Ticket Submission**
+
+- **Client-Side (Less Common):**
+  - Using `router.push('/tickets/new-id')` after a form submission in a Client Component works, but it’s not ideal for server-verified actions since it doesn't guarantee server-side validation or revalidation.
+  - **Data Fetching:** Relies on subsequent RSC payload or client-side refetch; might miss server-enforced freshness.
+- **Server-Side (`redirect('/tickets/new-id')` in Server Action):**
+  - **Mechanism:** HTTP 303/307 redirect after mutation.
+  - **Data Fetching:** Full request allows server to fetch latest data or revalidate cache (e.g., `revalidatePath('/tickets')` before redirect).
+  - **Outcome:** Ensures data consistency post-mutation, though slower.
+
+**Key Factors Affecting Data Fetching:**
+
+1. **Dynamic vs. Static Configuration:**
+   - **Dynamic:** Forces fresh data fetch on server for both navigation types (RSC payload for client-side, full HTML for server-side).
+   - **Static/Cached:** Reuses data unless revalidation is triggered, regardless of navigation type.
+2. **Revalidation Mechanisms:**
+   - Functions like `revalidatePath()` or `revalidateTag()` ensure fresh data on the next request, more impactful in server-side navigation or before redirects.
+3. **Server vs. Client Components:**
+   - Server Components rely on server data fetching during RSC payload generation or full rendering.
+   - Client Components need explicit refetch logic (e.g., `useEffect`) to update data on navigation.
+4. **Caching Layers:**
+   - Router Cache (client-side) reuses prefetched segments during client-side navigation.
+   - Data Cache or CDN (server-side) might serve stale data unless bypassed by dynamic settings or revalidation.
+
+### Practical Implications for `Ticket Quest`
+
+- **Use Client-Side Navigation for Interactive Features:** For search inputs, filters, or tab switches in your ticket management app, use `router.push()` or `router.replace()` to provide a smooth UX without full reloads. Ensure Server Components handling data are dynamic if real-time updates are needed.
+- **Use Server-Side Navigation for Mutations and Security:** After creating or updating tickets via Server Actions, use `redirect()` to ensure server-verified navigation and data consistency, potentially with `revalidatePath()` to refresh caches.
+- **Optimize Data Fetching:** Configure dynamic routes for pages needing fresh data (e.g., ticket status) and static for infrequently changing content (e.g., help pages). Use revalidation strategically before redirects to guarantee updated views.
+
+### Conclusion
+
+Client-side and server-side navigation in Next.js 15 serve distinct purposes within the App Router's hybrid model. Client-side navigation (`router.push()`, `router.replace()`, `<Link>`) offers speed and state preservation by fetching minimal RSC payloads, with data freshness dependent on dynamic/static configurations and caching. Server-side navigation (`redirect()`, `permanentRedirect()`) ensures server control and full HTML rendering via HTTP redirects, ideal for mutations and initial loads, with data fetching respecting SSR/SSG settings and revalidation. Understanding these mechanisms and their impact on data fetching allows developers to craft optimal user experiences in applications like `Ticket Quest`, balancing performance with data accuracy across various scenarios.
