@@ -1,7 +1,6 @@
 "use client";
 
 // import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
 import React from "react";
 import {
   Select,
@@ -10,15 +9,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { sortOptions, sortParser } from "../search-params-types";
 
-type Option = { label: string; sortKey: string; sortValue: string };
-
-type SortSelectProps = {
-  options: Option[];
+export type SortSelectOption = {
+  label: string;
+  sortKey: string;
+  sortValue: string;
 };
 
-export default function SortSelect({ options }: SortSelectProps) {
+type SortObject = {
+  sortKey: string;
+  sortValue: string;
+};
+
+type SortSelectProps = {
+  value: SortObject;
+  onChange: (sort: SortObject) => void;
+  options: SortSelectOption[];
+};
+
+export default function SortSelect({
+  value,
+  onChange,
+  options,
+}: SortSelectProps) {
   // const searchParams = useSearchParams();
   // const pathname = usePathname();
   // const { replace } = useRouter();
@@ -37,26 +50,34 @@ export default function SortSelect({ options }: SortSelectProps) {
   //   replace(`${pathname}?${params.toString()}`, { scroll: false });
   // };
 
-  const [sort, setSort] = useQueryStates(sortParser, sortOptions);
+  // const [sort, setSort] = useQueryStates(sortParser, sortOptions);
 
-  const handleSort = (sortKey: string) => {
-    const sortValue = options.find(
-      (option) => option.sortKey === sortKey
-    )?.sortValue;
-    setSort({
+  const handleSort = (compositeKey: string) => {
+    // const sortValue = options.find(
+    //   (option) => option.sortKey === sortKey
+    // )?.sortValue;
+
+    const [sortKey, sortValue] = compositeKey.split("_");
+    onChange({
       sortKey,
       sortValue,
     });
   };
 
   return (
-    <Select onValueChange={handleSort} defaultValue={sort.sortKey}>
+    <Select
+      onValueChange={handleSort}
+      defaultValue={value.sortKey + "_" + value.sortValue}
+    >
       <SelectTrigger>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         {options.map((option) => (
-          <SelectItem key={option.sortKey} value={option.sortKey}>
+          <SelectItem
+            key={option.sortKey + option.sortValue}
+            value={option.sortKey + "_" + option.sortValue}
+          >
             {option.label}
           </SelectItem>
         ))}
