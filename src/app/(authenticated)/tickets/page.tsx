@@ -21,7 +21,7 @@ import { SearchParamsProps } from "@/features/ticket/search-params-types";
 //export const revalidate = 30;
 
 type TicketsPageProps = {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 };
 
 export default async function Page({ searchParams }: TicketsPageProps) {
@@ -57,7 +57,7 @@ export default async function Page({ searchParams }: TicketsPageProps) {
 
         {/* <ErrorBoundary fallback={<Placeholder label="Something went Wrong!" />}> */}
         <Suspense fallback={<Spinner />}>
-          <TicketList searchParams={searchParams} userId={user?.id} />
+          <TicketList searchParams={await searchParams} userId={user?.id} />
         </Suspense>
         {/* </ErrorBoundary> */}
       </div>
