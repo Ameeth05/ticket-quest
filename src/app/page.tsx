@@ -1,11 +1,12 @@
+import { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
 import Heading from "@/components/heading";
 import Spinner from "@/components/spinner";
 import TicketList from "@/features/ticket/components/ticket-list";
-import { SearchParamsProps } from "@/features/ticket/search-params-types";
+import { searchParamsCache } from "@/features/ticket/search-params-types";
 
 type HomeProps = {
-  searchParams: Promise<SearchParamsProps>
+  searchParams: Promise<SearchParams>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
@@ -16,7 +17,9 @@ export default async function Home({ searchParams }: HomeProps) {
         description="Tickets by everyone at one place"
       />
       <Suspense fallback={<Spinner />}>
-        <TicketList searchParams={ await searchParams} />
+        <TicketList
+          searchParams={await searchParamsCache.parse(searchParams)}
+        />
       </Suspense>
     </div>
   );

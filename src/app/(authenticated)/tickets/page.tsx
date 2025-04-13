@@ -1,4 +1,5 @@
 //import { useEffect, useState } from "react";
+import { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
 import CardCompact from "@/components/card-compact";
 // import { ErrorBoundary } from "react-error-boundary";
@@ -9,7 +10,8 @@ import Spinner from "@/components/spinner";
 import { getAuth } from "@/features/auth/queries/get-auth";
 import TicketList from "@/features/ticket/components/ticket-list";
 import TicketUpsertForm from "@/features/ticket/components/ticket-upsert-form";
-import { SearchParamsProps } from "@/features/ticket/search-params-types";
+import { searchParamsCache } from "@/features/ticket/search-params-types";
+
 // import { Ticket } from "@/features/ticket/types";
 
 // the following expression forces the page to be dynamic. For some reason next.js consideres this page to be static meaning it is built during build time and the content in the page wouldnt change irresepctive of data fetching happening on this page. Apparently this not the best practice
@@ -21,7 +23,7 @@ import { SearchParamsProps } from "@/features/ticket/search-params-types";
 //export const revalidate = 30;
 
 type TicketsPageProps = {
-  searchParams: Promise<SearchParamsProps>;
+  searchParams: Promise<SearchParams>;
 };
 
 export default async function Page({ searchParams }: TicketsPageProps) {
@@ -57,7 +59,10 @@ export default async function Page({ searchParams }: TicketsPageProps) {
 
         {/* <ErrorBoundary fallback={<Placeholder label="Something went Wrong!" />}> */}
         <Suspense fallback={<Spinner />}>
-          <TicketList searchParams={await searchParams} userId={user?.id} />
+          <TicketList
+            searchParams={await searchParamsCache.parse(searchParams)}
+            userId={user?.id}
+          />
         </Suspense>
         {/* </ErrorBoundary> */}
       </div>
