@@ -4,9 +4,9 @@ import { ParsedSearchParams } from "../search-params-types";
 // import SearchInput from "./search-input";
 // import SortSelect from "./sort-select";
 import TicketItem from "./ticket-item";
+import TicketPaginations from "./ticket-pagination";
 import { TicketSearchInput } from "./ticket-search-input";
 import { TicketSortSelect } from "./ticket-sort-select";
-
 
 type TicketListProps = {
   userId?: string;
@@ -35,6 +35,10 @@ export default async function TicketList({
       ) : (
         <Placeholder label="No tickets found" />
       )}
+
+      <div className="w-full max-w-[420px] flex gap-x-2">
+        <TicketPaginations />
+      </div>
     </div>
   );
 }
