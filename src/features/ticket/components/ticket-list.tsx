@@ -36,7 +36,7 @@ export default async function TicketList({
         <Placeholder label="No tickets found" />
       )}
 
-      <div className="w-full max-w-[420px] flex gap-x-2">
+      <div className="w-full max-w-[420px] gap-x-2">
         <TicketPaginations />
       </div>
     </div>

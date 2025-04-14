@@ -52,7 +52,7 @@ export default function Pagination({
   );
 
   return (
-    <div className="flex-row justify-between items-center">
+    <div className="flex justify-between items-center">
       <p className="text-sm text-muted-foreground">{label}</p>
       <div className="flex gap-x-2">
         {previousButton}

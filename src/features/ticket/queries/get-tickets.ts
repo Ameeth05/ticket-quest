@@ -5,14 +5,20 @@ export const getTickets = async (
   userId: string | undefined,
   searchParams: ParsedSearchParams
 ) => {
-  return await prisma.ticket.findMany({
-    where: {
-      userId,
-      title: {
-        contains: searchParams.search,
-        mode: "insensitive",
-      },
+  const where = {
+    userId,
+    title: {
+      contains: searchParams.search,
+      mode: "insensitive" as const,
     },
+  };
+  const take = searchParams.size;
+  const skip = searchParams.size * searchParams.page;
+
+  return await prisma.ticket.findMany({
+    where,
+    skip,
+    take,
     orderBy: {
       // ...(searchParams.sort === "newest" && { createdAt: "desc" }),
       // ...(searchParams.sort === "bounty" && { bounty: "desc" }),
