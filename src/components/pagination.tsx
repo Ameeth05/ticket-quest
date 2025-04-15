@@ -1,3 +1,4 @@
+import { PaginatedTicketMetadataProps } from "@/features/ticket/components/ticket-pagination";
 import { Button } from "./ui/button";
 
 type PageAndSize = {
@@ -7,15 +8,18 @@ type PageAndSize = {
 type PaginationProps = {
   pagination: PageAndSize;
   onPagination: (pagination: PageAndSize) => void;
+  paginatedMetadata: PaginatedTicketMetadataProps;
 };
 export default function Pagination({
   pagination,
   onPagination,
+  paginatedMetadata: { count, hasNextPage },
 }: PaginationProps) {
   const startOffset = pagination.page * pagination.size + 1;
   const endOffset = startOffset - 1 + pagination.size;
+  const actualEndOffset = Math.min(endOffset, count);
 
-  const label = `${startOffset} - ${endOffset} of X`;
+  const label = `${startOffset} - ${actualEndOffset} of ${count} Tickets`;
 
   const handleNextPage = () => {
     onPagination({
@@ -44,7 +48,7 @@ export default function Pagination({
     <Button
       variant="outline"
       size="sm"
-      disabled={false}
+      disabled={!hasNextPage}
       onClick={handleNextPage}
     >
       Next
