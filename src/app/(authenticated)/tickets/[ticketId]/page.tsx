@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Separator } from "@/components/ui/separator";
+import { getComments } from "@/features/comment/queries/get-comments";
 import TicketItem from "@/features/ticket/components/ticket-item";
 import { getTicket } from "@/features/ticket/queries/get-ticket";
 import { homePath } from "@/paths";
@@ -12,7 +13,13 @@ export default async function Page({
 }) {
   const { ticketId } = await params;
 
-  const ticket = await getTicket(ticketId);
+  const ticketPromise = getTicket(ticketId);
+  const commentsPromise = getComments(ticketId);
+
+  const [ticket, comments] = await Promise.all([
+    ticketPromise,
+    commentsPromise,
+  ]);
 
   if (!ticket) {
     notFound();
@@ -29,7 +36,7 @@ export default async function Page({
       <Separator />
 
       <div className="flex justify-center w-full animate-fade-in-from-top">
-        <TicketItem ticket={ticket} isDetail={true} />
+        <TicketItem ticket={ticket} isDetail={true} comments={comments} />
       </div>
       {/* <RedirectToast /> */}
     </div>

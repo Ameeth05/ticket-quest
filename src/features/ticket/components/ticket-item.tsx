@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getAuth } from "@/features/auth/queries/get-auth";
 import { isOwner } from "@/features/auth/utils/is-owner";
 import Comments from "@/features/comment/components/comments";
+import { CommentWithMetadata } from "@/features/comment/types";
 import { cn } from "@/lib/utils";
 import { ticketEditPath, ticketPath } from "@/paths";
 import { toCurrencyFromCent } from "@/utils/currency";
@@ -35,11 +36,13 @@ type TicketItemProps = {
     };
   }>;
   isDetail?: boolean;
+  comments?: CommentWithMetadata[];
 };
 
 export default async function TicketItem({
   ticket,
   isDetail,
+  comments,
 }: TicketItemProps) {
   const { user } = await getAuth();
   const isTicketOwner = isOwner(user, ticket);
@@ -135,7 +138,10 @@ export default async function TicketItem({
         </div>
       </div>
       {isDetail ? (
-        // We are using suspense here so that when the ticket is laoded first, it can be displayed even before comments are loaded. As a suspense fallback, we are rendering a skeleton while the comments are bieng fetched. In the individual ticket page initially we were first fetching tickets and then we are fetching the comments. This is called waterfall/sequential execution of get request. That is why suspense is required here.
+        // We are using suspense here so that when the ticket is laoded first, it can be displayed even before comments are loaded. As a suspense fallback, we are rendering a skeleton while the comments are bieng fetched. In the individual ticket page initially we were first fetching ticket and then we are fetching the comments. This is called waterfall/sequential execution of get request. That is why suspense is required here.
+
+        // Later on we changed from sequential data fetching (first ticket and then comments) to parallel data fetching by fetching both the ticket and comments on the main ticket page by using await promise.all, instead of awaiting each request (ticket and commets) sequentially. The suspense code below might not be required if we are fetching data parallelly, but it is still being used for educational purposes so that when I come back later on I understand how suspense is bieng used.
+
         <Suspense
           fallback={
             <div className="flex flex-col gap-y-4">
@@ -145,7 +151,7 @@ export default async function TicketItem({
             </div>
           }
         >
-          <Comments ticketId={ticket.id} />
+          <Comments ticketId={ticket.id} comments={comments} />
         </Suspense>
       ) : null}
     </div>
