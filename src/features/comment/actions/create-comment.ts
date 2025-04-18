@@ -40,6 +40,5 @@ export const createComment = async (
   }
 
   revalidatePath(ticketPath(ticketId));
-
   return toActionState("SUCCESS", "Comment Created");
 };

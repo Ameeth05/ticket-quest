@@ -16,7 +16,7 @@ export default async function Page({
   const ticketPromise = getTicket(ticketId);
   const commentsPromise = getComments(ticketId);
 
-  const [ticket, comments] = await Promise.all([
+  const [ticket, paginatedComments] = await Promise.all([
     ticketPromise,
     commentsPromise,
   ]);
@@ -36,7 +36,11 @@ export default async function Page({
       <Separator />
 
       <div className="flex justify-center w-full animate-fade-in-from-top">
-        <TicketItem ticket={ticket} isDetail={true} comments={comments} />
+        <TicketItem
+          ticket={ticket}
+          isDetail={true}
+          paginatedComments={paginatedComments}
+        />
       </div>
       {/* <RedirectToast /> */}
     </div>
