@@ -5,6 +5,7 @@ import {
   SquareArrowOutUpRight,
 } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getAuth } from "@/features/auth/queries/get-auth";
 import { isOwner } from "@/features/auth/utils/is-owner";
 import Comments from "@/features/comment/components/comments";
@@ -132,7 +134,20 @@ export default async function TicketItem({
           )}
         </div>
       </div>
-      {isDetail ? <Comments ticketId={ticket.id}/> : null}
+      {isDetail ? (
+        // We are using suspense here so that when the ticket is laoded first, it can be displayed even before comments are loaded. As a suspense fallback, we are rendering a skeleton while the comments are bieng fetched. In the individual ticket page initially we were first fetching tickets and then we are fetching the comments. This is called waterfall/sequential execution of get request. That is why suspense is required here.
+        <Suspense
+          fallback={
+            <div className="flex flex-col gap-y-4">
+              <Skeleton className="h-[250px] w-full" />
+              <Skeleton className="h-[80px] ml-8 " />
+              <Skeleton className="h-[80px] ml-8 " />
+            </div>
+          }
+        >
+          <Comments ticketId={ticket.id} />
+        </Suspense>
+      ) : null}
     </div>
   );
 }
