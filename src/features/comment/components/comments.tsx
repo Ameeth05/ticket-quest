@@ -29,12 +29,19 @@ export default function Comments({
 
   const [comments, setComments] = useState(paginatedComments.list);
   const [metadata, setMetadata] = useState(paginatedComments.metadata);
+
   const handleMore = async () => {
     const morePaginatedComments = await getComments(ticketId, comments.length);
     const moreComments = morePaginatedComments.list;
 
     setComments([...comments, ...moreComments]);
     setMetadata(morePaginatedComments.metadata);
+  };
+
+  const handleDeleteComment = (id: string) => {
+    setComments((prevComments) =>
+      prevComments.filter((prevComment) => prevComment.id !== id)
+    );
   };
 
   return (
@@ -53,7 +60,13 @@ export default function Comments({
             button={[
               // ...(isOwner(user, comment)
               ...(comment.isOwner
-                ? [<CommentDeleteButton key="0" id={comment.id} />]
+                ? [
+                    <CommentDeleteButton
+                      key="0"
+                      id={comment.id}
+                      onDeleteComment={handleDeleteComment}
+                    />,
+                  ]
                 : []),
             ]}
           />
