@@ -44,12 +44,21 @@ export default function Comments({
     );
   };
 
+  const handleCreateComment = (comment: CommentWithMetadata) => {
+    setComments((prevComments) => [comment, ...prevComments]);
+  };
+
   return (
     <>
       <CardCompact
         title="Create Comment"
         description="A new comment will be created"
-        content={<CommentCreateForm ticketId={ticketId} />} // Component composition
+        content={
+          <CommentCreateForm
+            ticketId={ticketId}
+            onCreateComment={handleCreateComment}
+          />
+        } // Component composition
       />
 
       <div className="flex flex-col gap-y-2 ml-8">
