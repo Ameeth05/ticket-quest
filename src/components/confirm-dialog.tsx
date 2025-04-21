@@ -1,4 +1,10 @@
-import { cloneElement, useActionState, useEffect, useRef, useState } from "react";
+import {
+  cloneElement,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 // import Form from "./form/form";
 import { useActionFeedback } from "./form/hooks/use-action-feedback";
@@ -19,7 +25,7 @@ import { Button } from "./ui/button";
 type UseConfirmDialogProps = {
   title?: string;
   description?: string;
-  trigger: React.ReactElement;
+  trigger: React.ReactElement | ((isLoading: boolean) => React.ReactElement);
   action: () => Promise<ActionState>;
   onSuccess?: (actionState: ActionState) => void;
 };
@@ -33,15 +39,17 @@ export default function useConfirmDialog({
 }: UseConfirmDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const dialogTrigger = cloneElement(trigger, {
-    onClick: () => setIsOpen((state) => !state),
-  });
-
   const [actionState, formAction, isPending] = useActionState(
     action,
     EMPTY_ACTION_STATE
   );
 
+  const dialogTrigger = cloneElement(
+    typeof trigger === "function" ? trigger(isPending) : trigger,
+    {
+      onClick: () => setIsOpen((state) => !state),
+    }
+  );
   // const handleSuccess = () => {
   //   setIsOpen(false);
   //   // onSuccess?.(actionState);
