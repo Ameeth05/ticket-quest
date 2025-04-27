@@ -4,10 +4,11 @@ import { getAuth } from "@/features/auth/queries/get-auth";
 import { isOwner } from "@/features/auth/utils/is-owner";
 import { prisma } from "@/lib/prisma";
 
-export const getComments = async (
-  ticketId: string,
-  cursor?: { id: string; createdAt: number }
-) => {
+export const getComments = async (ticketId: string, cursor?: string) => {
+  // Parse the cursor string to an object if present
+  const parsedCursor = cursor
+    ? (JSON.parse(cursor) as { id: string; createdAt: number })
+    : undefined;
   const { user } = await getAuth();
 
   const where = {
@@ -20,8 +21,8 @@ export const getComments = async (
   let [comments, count] = await prisma.$transaction([
     prisma.comment.findMany({
       where,
-      cursor: cursor
-        ? { id: cursor.id, createdAt: new Date(cursor.createdAt) }
+      cursor: parsedCursor
+        ? { id: parsedCursor.id, createdAt: new Date(parsedCursor.createdAt) }
         : undefined,
       skip: cursor ? 1 : 0,
       include: {
